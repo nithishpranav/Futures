@@ -1,0 +1,12 @@
+[{
+    "machineID": "wh1000np",
+    "status": "active"
+},
+{
+    "machineID": "XYZ100",
+    "status": "active"
+},
+{
+    "machineID": "ERE200",
+    "status": "active"
+}]

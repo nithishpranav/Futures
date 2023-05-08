@@ -1,0 +1,9 @@
+{
+    "machineID" : "wh1000np",
+    "futuresSymbol" : "wh1000npMay30",
+    "expriryDay" :"10",
+    "fixedPay" : "1000",
+    "marginPercentage": "10",
+    "margin":  "100",
+    "fixedPayPerDay" : "100"
+}

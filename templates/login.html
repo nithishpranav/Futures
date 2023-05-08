@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+ 
+{% block y %}
+   
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+
+<link
+  href="//mincss.com/entireframework.min.css"
+  rel="stylesheet"
+  type="text/css"
+>
+<link 
+  href="{{url_for('static', filename = 'css/app.css')}}" 
+  rel="stylesheet"
+>
+<style>
+   body {
+      background-color: #343A40;
+   }
+
+   #login-form {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      padding: 0px;
+      background: #fff;
+      box-sizing: border-box;
+      box-shadow: 0 15px 25px rgba(0, 0, 0, .6);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 500;
+
+   }
+   #submit {
+      background: #343A40;
+;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 2px;
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      width: 70%;
+
+   }
+
+   #submit:hover {
+      background: #2f4c69;
+      color: #fff;
+   }
+
+   #walletAddress {
+      width: 60%;
+      margin: 10px 0;
+      padding: 10px;
+      border: none;
+      border-bottom: 1px solid #524960;
+      outline: none;
+      background: transparent;
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+      text-align: center;
+   }
+
+   h2 {
+      margin: 0px 50px 20px;
+      padding: 0;
+      font-weight: 500;
+      color: #524960;
+
+      text-align: center;
+   }
+    #form {
+      border-top: 1px solid #524960;
+      padding: 10px 50px;
+
+    }
+</style>
+
+   <body>
+   <div id = "login-form">
+   
+
+   <center>
+      <img src= "../static/logo/little-blocks-logo.png" width="400" height="160">
+      <h2> Login </h2>  
+      <form  id = "form" action="/login" method="POST">
+         <input placeholder="Enter Wallet Address" id="walletAddress" autocomplete="off" type="text" name="userWID" >
+         <input type="submit"  id = 'submit' name="Login">
+      </form>
+   </center>
+   </div>
+   <body>
+
+{% endblock %}x

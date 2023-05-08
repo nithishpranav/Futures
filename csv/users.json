@@ -1,0 +1,12 @@
+[
+    {
+        "walletAddress" : "0x1234567890",
+        "balance" : 1000,
+        "openTrades":[{
+            "tradeID": ""
+        }],
+        "tradeHistory":[{
+            "tradeID" : ""
+        }]
+    }
+]
