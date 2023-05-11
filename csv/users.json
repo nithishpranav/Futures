@@ -3,10 +3,37 @@
         "walletAddress" : "0x1234567890",
         "balance" : 1000,
         "openTrades":[{
-            "tradeID": ""
+            "trade":[{
+                "tradeID" : "",
+                "tradeSymbol" : "",
+                "tradeActive" : ""
+            }]
         }],
         "tradeHistory":[{
             "tradeID" : ""
         }]
     }
 ]
+
+//schema
+
+[
+    {
+        "walletAddress" : "0x1234567890",
+        "balance" : 1000,
+        "openTrades":[{
+            "trade":[{
+
+            }]
+        }],
+        "tradeHistory":[{
+            "trade":[{
+
+            }]
+        }]
+    }
+]
+
+
+//trade id will be created once the trade is active 
+

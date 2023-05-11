@@ -1,0 +1,10 @@
+
+
+States of a Trade
+
+    -1 - order placed  - trade order placed but waiting to be matched
+    0  - trade active  - trade is active between two participants
+    1  - trade end     - trade has been either exited or expired
+
+
+

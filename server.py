@@ -30,6 +30,8 @@ class MongoAPI:
         self.client = MongoClient("mongodb://localhost:27017/") 
         database = data['database']
         collection = data['collection']
+        print(database)
+        print(collection)
         cursor = self.client[database]
         self.collection = cursor[collection]
         self.data = data
@@ -47,6 +49,84 @@ class MongoAPI:
         output = {'Status': 'Successfully Inserted',
                   'Document_ID': str(response.inserted_id)}
         return output
+
+class SymbolMongoAPI:
+    def __init__(self, data):
+        self.client = MongoClient("mongodb://localhost:27017/")
+        database = "Futures"
+        collection = "Symbols"
+        cursor = self.client[database]
+        self.collection = cursor[collection]
+        self.data = data
+
+    def read(self):
+        log.info('Reading All Data')
+        documents = self.collection.find()
+        output = [{item: data[item] for item in data if item != '_id'} for data in documents]
+        return output
+    
+    def find(self, symbol):
+        log.info('Reading All Data')
+        documents = self.collection.find_one({"symbol": symbol})
+        output = [{item: documents[item] for item in documents if item != '_id'}]
+        #return documents
+        return output
+    
+
+
+class UserMongoAPI:
+    def __init__(self, data):
+        self.client = MongoClient("mongodb://localhost:27017/")
+        database = "Futures"
+        collection = "users"
+        cursor = self.client[database]
+        self.collection = cursor[collection]
+        self.data = data
+    
+    def find(self, walletAddress):
+        log.info('Reading All Data')
+        documents = self.collection.find_one({"walletAddress": walletAddress})
+        output = [{item: documents[item] for item in documents if item != '_id'}]
+        #return documents
+        return output
+    
+    def update(self, data):
+        #data = data.json
+        print(data)
+        # Extract the necessary information from the input
+        walletAddress = data['userWID']
+        symbol = data['symbol']
+        tradeID = data['tradeID']
+        tradeState = data['tradeState']
+        log.info('Reading All Data')
+        documents = self.collection.update_one({"walletAddress": walletAddress}, {"$push": {"openTrades": {"trade": {"symbol": symbol, "tradeID": tradeID, "tradeState": tradeState}}}})
+        #output = [{item: documents[item] for item in documents if item != '_id'}]
+        #return documents
+        return documents.modified_count
+        
+
+# the order placed by the user is added to user's openTrades array
+@app.route('/addTrade', methods=['POST'])
+def addTrade():
+    print("add_trade")
+    #print(request.json)
+    # Parse the JSON input received from the client-side
+
+    data = request.json
+    print(data)
+    obj = UserMongoAPI(data)
+    response  = obj.update(data)
+    # Use the update_one() method to add the new trade object to the openTrades array
+
+    # Check if the operation was successful and return an appropriate response
+
+    if response == 1:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False})
+
+
+
 
 def get_current_datetime():
     now = datetime.now()
@@ -342,18 +422,36 @@ def mongo_read():
                     status=200,
                     mimetype='application/json')
 
-@app.route('/getSymbols', methods=['GET'])
+@app.route('/getSymbols', methods=['GET', 'POST'])
 def getSymbols():
     data = request.json
     if data is None or data == {}:
         return Response(response=json.dumps({"Error": "Please provide connection information"}),
                         status=400,
                         mimetype='application/json')
-    obj1 = MongoAPI(data)
-    response = obj1.getSymbols()
+    obj1 = SymbolMongoAPI(data)
+    response = obj1.read()
     return Response(response=json.dumps(response),
                     status=200,
                     mimetype='application/json')
+
+@app.route('/findBySymbol/<symbol>', methods=['GET', 'POST'])
+def findBySymbol(symbol):
+    session["symbol"] = symbol
+    data = request.json
+    if data is None or data == {}:
+        return Response(response=json.dumps({"Error": "Please provide connection information"}),
+                        status=400,
+                        mimetype='application/json')
+    obj1 = SymbolMongoAPI(data)
+    print("symbol:"+symbol)
+    response = obj1.find(symbol)
+    return Response(response=json.dumps(response),
+                    status=200,
+                    mimetype='application/json')
+
+
+
 
 """
 Main function

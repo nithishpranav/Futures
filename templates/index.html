@@ -13,6 +13,8 @@
             {  
                 background-color: rgba(173, 173, 208, 0.39);  
                 }   
+
+
         </style>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,7 +23,34 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
 
-
+        <style>
+          table {
+            font-family: Arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+          }
+  
+          th, td {
+            text-align: left;
+            padding: 8px;
+          }
+  
+          th {
+            background-color: #ddd;
+            font-weight: bold;
+          }
+  
+          tr:nth-child(even) {
+            background-color: #f2f2f2;
+          }
+  
+          a {
+            color: grey;
+            text-decoration: none;
+            cursor: pointer;
+          }
+          </style>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         <!-- <link rel="stylesheet" href="../static/css/table.css"> -->
         <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
@@ -71,7 +100,7 @@
         <div class="row">
           <div class="col-md-3">
             <div class="card">
-              <div class="card-body">
+              <!-- <div class="card-body">
                 <h5 class="card-title">Market Watch</h5>
                 <table class="table">
                   <thead>
@@ -99,6 +128,31 @@
                     </tr>
                   </tbody>
                 </table>
+              </div> -->
+
+              <div class="card-body">
+                <table id="symbols">
+                </table>
+              
+                <!-- wrtire html for this fucntion
+                      async function getSymbols(){
+        console.log("getSymbols");
+        const response = await fetch('/getSymbols')
+              .then(response => response.json())
+              .then(data => {
+                  console.log(data);
+                  var symbols = data.symbols;
+                  var select = document.getElementById("symbol");
+                  for(var i = 0; i < symbols.length; i++) {
+                      var opt = symbols[i];
+                      var el = document.createElement("option");
+                      el.textContent = opt;
+                      el.value = opt;
+                      select.appendChild(el);
+                  }
+              })
+      } -->
+
               </div>
             </div>
           </div>
@@ -123,25 +177,25 @@
                         <h5 class="card-title">Order Entry</h5>
                       </div>
                       <div class="card-body">
-                        <form>
+                        <form onsubmit="placeOrder(event)">
                           <div class="mb-3">
                             <label for="order-type" class="form-label">Order Type</label>
                             <select class="form-select" id="order-type">
                               <option selected>Choose...</option>
-                              <option value="market">Fixed Payment</option>
-                              <option value="limit">Variable Payment</option>
+                              <option value="fixed">Fixed Payment</option>
+                              <option value="variable">Variable Payment</option>
                             </select>
                           </div>
                           <div class="mb-3">
-                            <label for="symbol" class="form-label">Symbol</label>
-                            <input type="text" class="form-control" id="symbol" placeholder="AAPL">
+                            <label for="symbol" class="form-label" >Symbol</label>
+                            <input type="text" class="form-control" id = "order-symbol" placeholder="">
                           </div>
 
                           <div class="mb-3">
-                            <label for="price" class="form-label">Price</label>
-                            <input type="number" class="form-control" id="price" placeholder="0.00">
+                            <label for="price" class="form-label">Margin (wei)</label>
+                            <input type="number" class="form-control" id="order-margin" placeholder="">
                           </div>
-                          <button type="submit" class="btn btn-primary">Place Order</button>
+                          <button type="submit" class="btn btn-primary" >Place Order</button>
                         </form>
                       </div>
                     </div>
@@ -221,6 +275,24 @@
           </div>
         </div>
         </div>
+        <div class = "col-md-3">
+          <div class ="card">
+            <div class="card-body">
+              <button onclick="dayUsage()">
+                <input type="number" id="dayUsage" name="date" value="">
+                <a>dayUsage</a>
+              </button>
+            </div>
+            <div class="card-body">
+              <input type="date" id="date" name="date" value="">
+              <button onclick="setDate()">
+                <a>setDate</a>
+              </button>
+  
+          </div>
+      </div>
+
+
       </div>
         </div>
       </center>
@@ -252,15 +324,9 @@
 
       // Load price chart data
 
-      var ctx = document.getElementById('price-chart').getContext('2d');
-
-      // Sample data
-      var cumulativeVariableRepayment = [70, 150, 260, 310, 380, 460 , 550];
-      var cumulativeFixedRepayment = [75,150,225,300,375,450,525]
-      var dates = ['01-01-2022', '02-01-2022', '03-01-2022', '04-01-2022', '05-01-2022', '06-01-2022', '07-01-2022'];
-
-      // Create the chart
-      var chart = new Chart(ctx, {
+      function symbolChart(symbol, cumulativeFixedRepayment,cumulativeVariableRepayment, dates){
+        var ctx = document.getElementById('price-chart').getContext('2d');
+        var chart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: dates,
@@ -309,6 +375,17 @@
           }
         }
       });
+      }
+
+
+      // Sample data
+      var cumulativeVariableRepayment = [70, 150, 260, 310, 380, 460 , 550];
+      var cumulativeFixedRepayment = [75,150,225,300,375,450,525]
+      var dates = ['01-01-2022', '02-01-2022', '03-01-2022', '04-01-2022', '05-01-2022', '06-01-2022', '07-01-2022'];
+
+
+      // Create the chart
+
 
       var priceData = [
         {x: '2021-01-01', y: 100},
@@ -353,20 +430,73 @@
       //var priceChart = new Chart(document.getElementById('price-chart'), priceChartConfig);
 
       // Place order function
-      function placeOrder(orderType, symbol, price) {
-        // Implement code to place order
+      function placeOrder(event) {
+        //event.preventDefault(); // prevent the form from submitting normally
+        var orderType = document.getElementById("order-type").value;
+        var orderSymbol = document.getElementById("order-symbol").value;
+        var orderMargin = document.getElementById("order-margin").value;
+        var orderTypeBool = 0;
+        //var user = document.getElementById("userWalletAddress").value;
+        var user = sessionStorage.getItem("user");
+        var kldfrom = "kld-from=" + user;
+        var kldsync = 'kld-sync=true'
+        var kldethvalue = 'kld-ethvalue=' + orderMargin;
+        if(orderType ==='variable'){
+          orderTypeBool = 1;
+        }
+
+
+        var data = {
+          "orderType": orderTypeBool
+        }
+        var myHeaders = new Headers();
+        myHeaders.append("Authorization", "Basic dTFzeDlhMmpkMTppZkdwNFFKS2gtU3RLTlZTR0RZc2xQMHBmZEdMelFJMHhiSXAzNHRzNGQ4");
+
+        var requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          redirect: 'follow',
+          body: JSON.stringify(data)
+        };
+
+        console.log(user+" "+orderTypeBool + " " + orderSymbol + " " + orderMargin );
+        var url = "https://u1afypqnup-u1qc0kallb-connect.us1-azure.kaleido.io/instances/0x51c83ffc78d2a7eb0ed8cc7392c41a9dbff3c901/participateInTrade?"+kldfrom+"&"+kldethvalue+"&"+kldsync;
+        fetch(url, requestOptions)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+
+              alert("Order placed successfully");
+          }
+          )
+          .catch(error => console.log('error', error));
+
       }
 
       // Handle form submit event
-      $('form').on('submit', function(event) {
-        event.preventDefault();
-        var orderType = $('#order-type').val();
-        var symbol = $('#symbol').val();
-        var price = $('#price').val();
-        placeOrder(orderType, symbol, price);
-      });
+      // $('form').on('submit', function(event) {
+      //   event.preventDefault();
+      //   var orderType = $('#order-type').val();
+      //   var symbol = $('#symbol').val();
+      //   var price = $('#price').val();
+      //   placeOrder(orderType, symbol, price);
+      // });
 
       // Load open orders
+
+      function loadOpenOrders() {
+        var user = sessionStorage.getItem("user");
+        var kldfrom = "kld-from=" + user;
+        var kldsync = 'kld-sync=true'
+        var myHeaders = new Headers();
+
+        
+        // get the list of open orders and trades
+        // if the trade is open 
+
+      }
+
+
       var openOrders = [
         {id: 1, symbol: 'XYZ100July15',  price: 100, type: 'Fixed Payment', status: 'open'},
         {id: 2, symbol: 'ERE200May30',  price: 200, type: 'Variable Payment', status: 'open'},
@@ -381,6 +511,8 @@
         row.append($('<td>').text(order.price));
         row.append($('<td>').text(order.type));
         row.append($('<td>').text(order.status));
+        row.append($('<td>').text(order.pnl));
+        row.append($('<td>').append($('<button>').text('Exit').addClass('btn btn-success')));
         $('#open-orders-body').append(row);
       });
 
@@ -415,6 +547,7 @@
                   console.log(data);
                   userWID = data.userWID;
                   accountBalance = data.ether;
+                  sessionStorage.setItem("user", userWID);
                   document.getElementById("userWalletAddress").innerHTML = "Address: " + userWID;
                   document.getElementById("userAccountBalance").innerHTML = "Balance: " + accountBalance + " ETH";
               })
@@ -422,7 +555,7 @@
 
       function getBalance(userWID) {
         var myHeaders = new Headers();
-        myHeaders.append("Authorization", "Bearer u0mywx3301-z7CQdXd2DwI5exnrL5oEA/0/7vRa2wko6sYWdGybNCA=");
+        myHeaders.append("Authorization", "Basic dTFzeDlhMmpkMTppZkdwNFFKS2gtU3RLTlZTR0RZc2xQMHBmZEdMelFJMHhiSXAzNHRzNGQ4");
 
         url = "https://console-us1.kaleido.io/api/v1/consortia/u1zcnjj8mm/environments/u1afypqnup/eth/getbalance/" + userWID;
 
@@ -444,5 +577,161 @@
           .catch(error => console.log('error', error));
       }
 
+
+      // async function getSymbols(){
+      //   console.log("getSymbols");
+      //   const response = await fetch('/getSymbols')
+      //         .then(response => response.json())
+      //         .then(data => {
+      //             console.log(data);
+      //             var symbols = data.symbols;
+      //             var select = document.getElementById("symbol");
+      //             for(var i = 0; i < symbols.length; i++) {
+      //                 var opt = symbols[i];
+      //                 var el = document.createElement("option");
+      //                 el.textContent = opt;
+      //                 el.value = opt;
+      //                 select.appendChild(el);
+      //             }
+      //         })
+      // }
+
+      async function getSymbols(){
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var raw = JSON.stringify({
+          "database": "",
+          "collection": ""
+        });
+
+        var requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          body: raw,
+          redirect: 'follow'
+        };
+
+        const response = await fetch("http://localhost:5000/getSymbols", requestOptions)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            symbolsTable(data);
+          
+          })
+          .catch(error => console.log('error', error));
+
+	    }
+
+      async function symbolsTable(data){
+        console.log("symbolsTable");
+        console.log(data);
+        const table = document.querySelector("#symbols");
+        const tbody = document.createElement("tbody"); // move tbody creation before thead
+        data.forEach(obj => {
+          const row = tbody.insertRow();
+          Object.keys(obj).forEach(key => {
+            console.log(key, obj[key])
+            if (key === 'symbol') {
+              const cell = row.insertCell();
+
+              const link = document.createElement("a");
+              link.href = "#";
+              link.innerText = obj[key];
+              link.addEventListener("click", () => {
+                //alert(`Clicked on ${obj[key]}`);
+                pickedSymbol(obj[key]);
+                console.log('${obj[key]}');
+              });
+              cell.appendChild(link);
+
+            } else {
+              const cellText = document.createTextNode(obj[key]);
+              //cell.appendChild(cellText);
+            }
+          });
+        });
+        const thead = table.createTHead(); // create thead after tbody
+        const headerRow = thead.insertRow();
+        Object.keys(data[0]).forEach(key => {
+          if(key ==="symbol"){
+            const th = document.createElement("th");
+            const headerText = document.createTextNode(key);
+            th.appendChild(headerText);
+            headerRow.appendChild(th);  
+          }
+
+        });
+        table.appendChild(tbody);
+      }
+	    getSymbols(); 
+
+
+
+
+      async function pickedSymbol(symbol){
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var raw = JSON.stringify({
+          "database": "",
+          "collection": ""
+        });
+
+        url = "http://localhost:5000/findBySymbol/" + symbol;
+
+        var requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          body: raw,
+          redirect: 'follow'
+        };
+
+        const response = await fetch(url, requestOptions)
+          .then(response => response.text())
+          .then(result => {
+            console.log(result)
+            var jsArray = JSON.parse(result);
+            cumulativeFixedRepayment = jsArray[0].fixedRepaymentValue;
+            cumulativeVariableRepayment = jsArray[0].variableRepaymentValue;
+            dates = jsArray[0].date;            
+            symbolChart(symbol, cumulativeFixedRepayment,cumulativeVariableRepayment, dates)
+            orderPlacer(symbol);
+          })
+          .catch(error => console.log('error', error));
+
+
+      }
+
+
+      function orderPlacer(symbol){
+
+        var myHeaders = new Headers();
+        myHeaders.append("Authorization", "Basic dTFzeDlhMmpkMTppZkdwNFFKS2gtU3RLTlZTR0RZc2xQMHBmZEdMelFJMHhiSXAzNHRzNGQ4");
+        userWID = "0x81db5f1e9d7fdd3bb8ca2ec20edb4dbd2f58b8a8";
+        url = "https://u1afypqnup-u1qc0kallb-connect.us1-azure.kaleido.io/instances/"+symbol+"/getContractDetails?kld-from="+userWID; 
+        var requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        redirect: 'follow'
+        };
+
+        fetch(url, requestOptions)
+        .then(response => response.json())
+        .then(result =>{
+          console.log(result);
+          var margin = parseInt(result.output4);
+          console.log(margin);
+          document.getElementById("order-margin").value = margin;
+          document.getElementById("order-symbol").value = symbol;
+        })
+
+      }
+    </script>
+
+    <script>
+      function nextDay(){
+        
+      }
     </script>
 </html>
