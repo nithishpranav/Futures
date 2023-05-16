@@ -90,40 +90,178 @@ class UserMongoAPI:
         #return documents
         return output
     
-    def update(self, data):
+    def getOrders(self, walletAddress):
+        log.info('Reading All Data')
+        document = self.collection.find_one({"walletAddress": walletAddress})
+        if document is None:
+            return jsonify({'error': 'Document not found'})
+        #return documents
+        orders = document.get('Orders', [])
+        return jsonify({'Orders': orders})
+    
+    def getTrades(self, walletAddress):
+        log.info('Reading All Data')
+        document = self.collection.find_one({"walletAddress": walletAddress})
+        if document is None:
+            return jsonify({'error': 'Document not found'})
+        #return documents
+        trades = document.get('Trades', [])
+        return jsonify({'Trades': trades})
+
+    def addOrder(self, data):
         #data = data.json
         print(data)
         # Extract the necessary information from the input
         walletAddress = data['userWID']
         symbol = data['symbol']
-        tradeID = data['tradeID']
-        tradeState = data['tradeState']
+        orderID = data['orderID']
         log.info('Reading All Data')
-        documents = self.collection.update_one({"walletAddress": walletAddress}, {"$push": {"openTrades": {"trade": {"symbol": symbol, "tradeID": tradeID, "tradeState": tradeState}}}})
+        documents = self.collection.update_one({"walletAddress": walletAddress}, {"$push": {"Orders": {"order": {"symbol": symbol, "orderID": orderID}}}})
         #output = [{item: documents[item] for item in documents if item != '_id'}]
         #return documents
+        return documents.modified_count    
+
+    def deleteOrder(self, data):
+        print(data)
+        walletAddress = data['userWID']
+        symbol = data['symbol']
+        orderID = data['orderID']
+        documents = self.collection.update_one(
+            {'walletAddress': walletAddress},
+            {'$pull': {'Orders': {'order.symbol': symbol, 'order.orderID': orderID}}}
+        )
         return documents.modified_count
-        
+
+    def addTrade(self, data):
+        print(data)
+        walletAddress = data['userWID']
+        symbol = data['symbol']
+        tradeID = data['tradeID']
+        documents = self.collection.update_one(
+            {"walletAddress": walletAddress}, 
+            {"$push": {"Trades": {"trade": {"symbol": symbol, "tradeID": tradeID}}}}
+        )
+        return documents.modified_count
+    
+
+    def deleteTrade(self, data):
+        print(data)
+        walletAddress = data['userWID']
+        symbol = data['symbol']
+        tradeID = data['tradeID']
+        documents = self.collection.update_one(
+            {'walletAddress': walletAddress},
+            {'$pull': {'Trades': {'trade.symbol': symbol, 'trade.tradeID': tradeID}}}
+        )
+        return documents.modified_count
+
+
+# get the list of all the orders/trades placed by the user
+
+@app.route('/getOrders', methods=['POST'])
+def getOrders():
+    print("get_orders")
+    data = request.json
+    print(data)
+    obj = UserMongoAPI(data)
+    response  = obj.getOrders(data['userWID'])
+    return response
+
+
+@app.route('/getTrades', methods=['POST'])
+def getTrades():
+    print("get_trades")
+    data = request.json
+    print(data)
+    obj = UserMongoAPI(data)
+    response  = obj.getTrades(data['userWID'])
+    return response
+
+    
+
 
 # the order placed by the user is added to user's openTrades array
-@app.route('/addTrade', methods=['POST'])
-def addTrade():
-    print("add_trade")
+@app.route('/addOrder', methods=['POST'])
+def addOrder():
+    print("add_order")
+    data = request.json
+    print(data)
+    obj = UserMongoAPI(data)
+    response  = obj.addOrder(data)
+    if response == 1:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False})
+
+
+# the order is executed and becomes a trade
+#  delete the order from the orders array and add it to the trades array
+
+@app.route('/deleteOrder', methods=['POST'])
+def deleteOrder():
+    print("delete_order")
     #print(request.json)
     # Parse the JSON input received from the client-side
 
     data = request.json
     print(data)
     obj = UserMongoAPI(data)
-    response  = obj.update(data)
-    # Use the update_one() method to add the new trade object to the openTrades array
+    response  = obj.deleteOrder(data)
+    if response == 1:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False})
+    
 
-    # Check if the operation was successful and return an appropriate response
+@app.route('/addTrade', methods=['POST'])
+def addTrade():
+    print("add_trade")
+
+    data = request.json
+    print(data)
+    obj = UserMongoAPI(data)
+    response  = obj.addTrade(data)
+
 
     if response == 1:
         return jsonify({'success': True})
     else:
         return jsonify({'success': False})
+
+
+@app.route('/deleteTrade', methods=['POST'])
+def deleteTrade():
+    print("delete_trade")
+    #print(request.json)
+    # Parse the JSON input received from the client-side
+
+    data = request.json
+    print(data)
+    obj = UserMongoAPI(data)
+    response  = obj.deleteTrade(data)
+    if response == 1:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False})
+    
+
+# events
+
+@app.route('/orderMatched', methods=['POST'])
+def orderMatched():
+    data = request.json
+    print(data)
+    return jsonify({'success': True})
+    # delete the order from the orders array 
+    
+
+@app.route('/tradeCreated', methods=['POST'])
+def tradeCreated():
+    data = request.json
+    print(data)
+    return jsonify({'success': True})
+    # add the trade to the trades array
+
 
 
 

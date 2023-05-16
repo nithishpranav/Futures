@@ -1,24 +1,20 @@
-{
-    "_id": {
-      "$oid": "645a9d1f437cfa70f38adda2"
-    },
-    "walletAddress": "0x1234567890",
-    "balance": 1000,
-    "openTrades": [
-      {
-        "trade": [
-          {}
+    {
+        "walletAddress": "0x81db5f1e9d7fdd3bb8ca2ec20edb4dbd2f58b8a8",
+        "Orders": [
+        {
+        }
+        ],
+        "Trades": [
+        {
+
+        }
+        ],
+        "tradeHistory": [
+        {
+
+        }
         ]
-      }
-    ],
-    "tradeHistory": [
-      {
-        "trade": [
-          {}
-        ]
-      }
-    ]
-  }
+    }
 
   {
     "_id": {

@@ -223,13 +223,37 @@
           </div>
       </div>
       <div class="row">
-
         <div class="col-md-9">
           <div class="row mt-3">
             <div class="col-md-12" style="width: 100%;">
               <div class="card">
                 <div class="card-header">
                   <h5 class="card-title">Open Orders</h5>
+                </div>
+                <div class="card-body">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Symbol</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="open-orders-body">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-12" style="width: 100%;">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="card-title">Active Trades</h5>
                 </div>
                 <div class="card-body">
                   <table class="table">
@@ -430,7 +454,7 @@
       //var priceChart = new Chart(document.getElementById('price-chart'), priceChartConfig);
 
       // Place order function
-      function placeOrder(event) {
+      async function placeOrder(event) {
         //event.preventDefault(); // prevent the form from submitting normally
         var orderType = document.getElementById("order-type").value;
         var orderSymbol = document.getElementById("order-symbol").value;
@@ -461,11 +485,11 @@
 
         console.log(user+" "+orderTypeBool + " " + orderSymbol + " " + orderMargin );
         var url = "https://u1afypqnup-u1qc0kallb-connect.us1-azure.kaleido.io/instances/0x51c83ffc78d2a7eb0ed8cc7392c41a9dbff3c901/participateInTrade?"+kldfrom+"&"+kldethvalue+"&"+kldsync;
-        fetch(url, requestOptions)
+        const response = await fetch(url, requestOptions)
           .then(response => response.json())
           .then(data => {
             console.log(data);
-
+              updateOrderStatus(user, orderSymbol);
               alert("Order placed successfully");
           }
           )
@@ -483,6 +507,28 @@
       // });
 
       // Load open orders
+
+      function updateOrderStatus(user, symbol){
+        var raw = JSON.stringify({
+          "userWID" : user,
+          "symbol": symbol,
+          "tradeState": "-1",
+          "tradeID": "-1"
+        });
+          var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        var requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          body: raw,
+          redirect: 'follow'
+        };
+
+        fetch("http://localhost:5000/addOrder", requestOptions)
+          .then(response => response.text())
+          .then(result => console.log(result))
+          .catch(error => console.log('error', error));
+      }
 
       function loadOpenOrders() {
         var user = sessionStorage.getItem("user");
