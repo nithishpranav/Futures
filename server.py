@@ -117,8 +117,6 @@ class UserMongoAPI:
         orderID = data['orderID']
         log.info('Reading All Data')
         documents = self.collection.update_one({"walletAddress": walletAddress}, {"$push": {"Orders": {"order": {"symbol": symbol, "orderID": orderID}}}})
-        #output = [{item: documents[item] for item in documents if item != '_id'}]
-        #return documents
         return documents.modified_count    
 
     def deleteOrder(self, data):

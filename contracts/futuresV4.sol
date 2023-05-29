@@ -46,6 +46,7 @@ pragma solidity ^0.8.17;
         getContractDetails()
         
     Events
+        event PlaceOrder(address indexed participant,uint256 orderID,string symbol);
         event CreateTrade(uint256 tradeID, address indexed participantA, address indexed participantB)
         event EODTracker(uint256 currentFixedValue, uint256 currentVariableValue)
         event PayoutTransferInitiator(uint256 tradeID, address transferInitiator);
@@ -190,6 +191,8 @@ contract Futures{
     ///Order Queue///
 */
 
+    event PlaceOrder(address indexed participant,uint256 orderID,string symbol);
+
     function placeOrder(uint256 orderType) public payable{
         address _to = address(this);
         (bool sent, bytes memory data) = _to.call{value: msg.value}("");
@@ -210,6 +213,8 @@ contract Futures{
         orderIndex[order.orderID] = index;
 
         enqueue(index,orderType);
+
+        emit PlaceOrder(order.participant,order.orderID,futuresSymbol);
     }
 
 

@@ -6,3 +6,19 @@
     "date":[]
     }
 ]
+
+v4testmachine2 
+[
+    {
+    "symbol":"v4testmachine2",
+    "fixedRepaymentValue":[],
+    "variableRepaymentValue":[],
+    "date":[]
+    }
+] 
+
+
+"_expiryDay": "10",
+"_fixedPay": "12000000000000",
+"_futuresSymbol": "V4TestMachine2",
+"_marginPercentage": "20"
