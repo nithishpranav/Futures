@@ -47,7 +47,7 @@ pragma solidity ^0.8.17;
         
     Events
         event PlaceOrder(address indexed participant,uint256 orderID,string symbol);
-        event CreateTrade(uint256 tradeID, address indexed participantA, address indexed participantB)
+        event CreateTrade(uint256 tradeID, address indexed participantA, address indexed participantB, string symbol)
         event EODTracker(uint256 currentFixedValue, uint256 currentVariableValue)
         event PayoutTransferInitiator(uint256 tradeID, address transferInitiator);
         event TransferTrade(uint256 tradeID, address indexed _participantA, address _participantB);
@@ -245,7 +245,7 @@ contract Futures{
 
 
 
-    event OrderMatching(address indexed fixedParticipant, uint256 fixedOrderID, address indexed variableParticipant, uint256 variableOrderID);
+    event OrderMatching(address indexed fixedParticipant, uint256 fixedOrderID, address indexed variableParticipant, uint256 variableOrderID, string Symbol);
 
     function orderMatching()public returns(bool){
         uint256 fixedPaymentOrderLength = fixedPaymentOrderLast - fixedPaymentOrderFirst;
@@ -288,11 +288,11 @@ contract Futures{
             return false;
         }
 
-        emit OrderMatching(orders[fixedIndex].participant, orders[fixedIndex].orderID, orders[variableIndex].participant, orders[variableIndex].orderID);
+        emit OrderMatching(orders[fixedIndex].participant, orders[fixedIndex].orderID, orders[variableIndex].participant, orders[variableIndex].orderID,futuresSymbol);
         return true;
     }
 
-    event PayoutTransferInitiator(uint256 tradeID, address transferInitiator);
+    event PayoutTransferInitiator(uint256 tradeID, address transferInitiator, string symbol);
 
     function payoutTransferInitiator(uint256 tradeID, address payable transferInitiator)public{
         uint256 index = tradeIndex[tradeID];
@@ -309,11 +309,11 @@ contract Futures{
         //decrease the margin value with the payout
         trades[index].tradeValue = trades[index].tradeValue - payoutToTransferInitiator;
 
-        emit PayoutTransferInitiator(tradeID,transferInitiator);
+        emit PayoutTransferInitiator(tradeID,transferInitiator,futuresSymbol);
     }
 
 
-    event TransferTrade(uint256 tradeID, address indexed _participantA, address _participantB);
+    event TransferTrade(uint256 tradeID, address indexed _participantA, address _participantB, string symbol);
 
     function transferTrade (uint256 _tradeID, address _participantA, address _participantB) public {
         uint256 index = tradeIndex[_tradeID];
@@ -322,10 +322,10 @@ contract Futures{
         trades[index].flag = true;
         trades[index].tradeValue += margin;
 
-        emit TransferTrade(_tradeID, _participantA, _participantB);
+        emit TransferTrade(_tradeID, _participantA, _participantB, futuresSymbol);
     }
 
-    event CreateTrade(uint256 tradeID, address indexed participantA, address indexed participantB);
+    event CreateTrade(uint256 tradeID, address indexed participantA, address indexed participantB, string symbol);
 
     function createTrade(address _participantA, address _participantB) public{
         //initialize an empty struct and then update it
@@ -348,7 +348,7 @@ contract Futures{
         uint256 index = trades.length -1;
         tradeIndex[trade.tradeID] = index;
 
-        emit CreateTrade(trade.tradeID,trade.participantA,trade.participantA);
+        emit CreateTrade(trade.tradeID,trade.participantA,trade.participantA, futuresSymbol);
 
     }
 
@@ -359,7 +359,7 @@ contract Futures{
                 the lower margin (profit for fixed is called when the variable losses are called 
 
     */
-    event EODTracker(uint256 currentFixedValue, uint256 currentVariableValue);
+    event EODTracker(uint256 currentFixedValue, uint256 currentVariableValue, string symbol);
 
     function eodTracker( uint256 cost) public payable{
         //the eodTracker must convert the cost from fiat to crypto, but for now we assume the cost is in crypto
@@ -395,7 +395,7 @@ contract Futures{
                 else if(day == expriryDay){
                     expiry(i);
                 }
-                emit EODTracker(trades[i].currentFixedValue, trades[i].currentVariableValue);
+                emit EODTracker(trades[i].currentFixedValue, trades[i].currentVariableValue, futuresSymbol);
             }
         }
     }

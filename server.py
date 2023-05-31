@@ -112,7 +112,7 @@ class UserMongoAPI:
         #data = data.json
         print(data)
         # Extract the necessary information from the input
-        walletAddress = data['userWID']
+        walletAddress = data['participant']
         symbol = data['symbol']
         orderID = data['orderID']
         log.info('Reading All Data')
@@ -267,6 +267,40 @@ def tradeCreated():
 def get_current_datetime():
     now = datetime.now()
     return now.strftime("%H:%M:%S")
+
+
+
+"""
+kalido events
+"""
+@app.route('/eventPlaceOrder', methods=['POST'])
+def handle_eventPlaceOrder():
+    raw =request.data.decode('utf-8').replace("'", '"')
+    response =  json.loads(raw) 
+    data = response[0]["data"]
+    print(data)
+    obj = UserMongoAPI(data)
+    response  = obj.addOrder(data)
+    if response == 1:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False})
+    
+
+
+@app.route('/eventOrderMatched', methods=['POST'])
+def handle_eventOrderMatched():
+    raw = request.data.decode('utf-8').replace("'", '"')
+    response =  json.loads(raw)
+    
+
+
+
+
+"""
+end of kalido events
+"""
+
 
 
 """
