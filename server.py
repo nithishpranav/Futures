@@ -135,9 +135,10 @@ class UserMongoAPI:
         walletAddress = data['userWID']
         symbol = data['symbol']
         tradeID = data['tradeID']
+        tradeType = data['tradeType']
         documents = self.collection.update_one(
             {"walletAddress": walletAddress}, 
-            {"$push": {"Trades": {"trade": {"symbol": symbol, "tradeID": tradeID}}}}
+            {"$push": {"Trades": {"trade": {"symbol": symbol, "tradeID": tradeID, "tradeType" : tradeType}}}}
         )
         return documents.modified_count
     
@@ -285,14 +286,86 @@ def handle_eventPlaceOrder():
         return jsonify({'success': True})
     else:
         return jsonify({'success': False})
-    
-
 
 @app.route('/eventOrderMatched', methods=['POST'])
 def handle_eventOrderMatched():
     raw = request.data.decode('utf-8').replace("'", '"')
     response =  json.loads(raw)
-    
+    data = response[0]["data"]
+    print(data)
+
+    #fixed order delete
+    fixedOrderData = {
+        "userWID": data["fixedParticipant"],
+        "symbol": data["Symbol"],
+        "orderID": data["fixedOrderID"]
+    }
+
+    obj = UserMongoAPI(fixedOrderData)
+    response  = obj.deleteOrder(fixedOrderData)
+    if response == 1:
+        print("fixed order deleted")
+    else:
+        print("fixed order not deleted")
+
+    #variable order delete
+    variableOrderData = {
+        "userWID": data["variableParticipant"],
+        "symbol": data["Symbol"],
+        "orderID": data["variableOrderID"]
+    }
+
+    obj = UserMongoAPI(variableOrderData)
+    response  = obj.deleteOrder(variableOrderData)
+    if response == 1:
+        print("variable order deleted")
+    else:
+        print("variable order not deleted")
+
+@app.route('/eventCreateTrade', methods=['POST'])
+def handle_eventCreateTrade():
+    raw = request.data.decode('utf-8').replace("'", '"')
+    response = json.loads(raw)
+    data = response[0]["data"]
+    print(data)
+
+    #add trade to fixed user
+    fixedTradeData = {
+        "userWID": data["participantA"],
+        "symbol": data["symbol"],
+        "tradeID": data["tradeID"],
+        "tradeType": "0"
+    }
+
+    obj = UserMongoAPI(fixedTradeData)
+    response  = obj.addTrade(fixedTradeData)
+    if response == 1:
+        print("fixed trade added")
+    else:
+        print("fixed trade not added")
+
+    #add trade to variable user
+    variableTradeData = {
+        "userWID": data["participantB"],
+        "symbol": data["symbol"],
+        "tradeID": data["tradeID"],
+        "tradeType": "1"
+    }
+
+    obj = UserMongoAPI(variableTradeData)
+    response  = obj.addTrade(variableTradeData)
+    if response == 1:
+        print("variable trade added")
+    else:
+        print("variable trade not added")
+    return jsonify({'success': True})
+
+
+
+
+
+
+
 
 
 

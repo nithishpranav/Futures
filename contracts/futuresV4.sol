@@ -48,9 +48,9 @@ pragma solidity ^0.8.17;
     Events
         event PlaceOrder(address indexed participant,uint256 orderID,string symbol);
         event CreateTrade(uint256 tradeID, address indexed participantA, address indexed participantB, string symbol)
-        event EODTracker(uint256 currentFixedValue, uint256 currentVariableValue, string symbol)
-        event PayoutTransferInitiator(uint256 tradeID, address transferInitiator, string symbol);
-        event TransferTrade(uint256 tradeID, address indexed _participantA, address _participantB, string symbol);
+        event EODTracker(uint256 currentFixedValue, uint256 currentVariableValue)
+        event PayoutTransferInitiator(uint256 tradeID, address transferInitiator);
+        event TransferTrade(uint256 tradeID, address indexed _participantA, address _participantB);
 
 
     Changes to be made 
@@ -348,7 +348,7 @@ contract Futures{
         uint256 index = trades.length -1;
         tradeIndex[trade.tradeID] = index;
 
-        emit CreateTrade(trade.tradeID,trade.participantA,trade.participantA, futuresSymbol);
+        emit CreateTrade(trade.tradeID,trade.participantA,trade.participantB, futuresSymbol);
 
     }
 

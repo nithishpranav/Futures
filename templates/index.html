@@ -57,7 +57,7 @@
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     </head>
-    <body onload="userDetails()">
+    <body onload="userDetails(); loadOpenOrders(); loadActiveTrades()">
       {% block y %}
       {% if session.userWID %}
       <div>
@@ -231,14 +231,11 @@
                   <h5 class="card-title">Open Orders</h5>
                 </div>
                 <div class="card-body">
-                  <table class="table">
+                  <table class="table" id = "openOrdersTable">
                     <thead>
                       <tr>
-                        <th scope="col">#</th>
                         <th scope="col">Symbol</th>
-                        <th scope="col">Price</th>
-                        <th scope="col">Type</th>
-                        <th scope="col">Status</th>
+                        <th scope="col">Order ID</th>
                       </tr>
                     </thead>
                     <tbody id="open-orders-body">
@@ -256,14 +253,14 @@
                   <h5 class="card-title">Active Trades</h5>
                 </div>
                 <div class="card-body">
-                  <table class="table">
+                  <table class="table" id = "activeTradesTable">
                     <thead>
                       <tr>
-                        <th scope="col">#</th>
                         <th scope="col">Symbol</th>
-                        <th scope="col">Price</th>
+                        <th scope="col">TradeID</th>
                         <th scope="col">Type</th>
-                        <th scope="col">Status</th>
+                        <th scope="col">PnL</th>
+                        
                       </tr>
                     </thead>
                     <tbody id="open-orders-body">
@@ -276,7 +273,7 @@
           </div>
           <div class="row mt-3">
           <div class="col-md-12">
-            <div class="card">
+            <!-- <div class="card">
               <div class="card-header">
                 <h5 class="card-title">Trade History</h5>
               </div>
@@ -295,7 +292,7 @@
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
         </div>
@@ -530,54 +527,386 @@
       }
 
       function loadOpenOrders() {
+
+        console.log("loadOpenOrders");
         var user = sessionStorage.getItem("user");
         var kldfrom = "kld-from=" + user;
         var kldsync = 'kld-sync=true'
         var myHeaders = new Headers();
 
         
-        // get the list of open orders and trades
-        // if the trade is open 
+        // get the list of open orders 
+
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var raw = JSON.stringify({
+          "userWID": user,
+        });
+
+        var requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          body: raw,
+          redirect: 'follow'
+        };
+
+        fetch("http://localhost:5000/getOrders", requestOptions)
+          .then(response => response.json())
+          .then(result => 
+          {
+            console.log(result)
+            
+            var ordersArray = result.Orders;
+            var tradesArray = result.Trades;
+            var table = document.getElementById("openOrdersTable");
+            var ordersTableHeader = ["symbol", "orderID"];
+            // Create the table rows
+            for (var i = 0; i < ordersArray.length; i++) {
+              var order = ordersArray[i].order;
+              var row = document.createElement("tr");
+              console.log(order[0])
+
+              for (var j = 0; j < ordersTableHeader.length; j++) {
+                var td = document.createElement("td");
+                td.textContent = order[ordersTableHeader[j]];
+                row.appendChild(td);
+              }
+              table.appendChild(row);
+              ///////////////////////////////////////
+            }
+          })
+          .catch(error => console.log('error', error));
 
       }
 
 
-      var openOrders = [
-        {id: 1, symbol: 'XYZ100July15',  price: 100, type: 'Fixed Payment', status: 'open'},
-        {id: 2, symbol: 'ERE200May30',  price: 200, type: 'Variable Payment', status: 'open'},
-        // ...
-      ];
+      function loadActiveTrades() {
+        var user = sessionStorage.getItem("user");
+        var kldfrom = "kld-from=" + user;
+        var kldsync = 'kld-sync=true';
+        var myHeaders = new Headers();
 
-      // Display open orders
-      $.each(openOrders, function(index, order) {
-        var row = $('<tr>');
-        row.append($('<td>').text(order.id));
-        row.append($('<td>').text(order.symbol));
-        row.append($('<td>').text(order.price));
-        row.append($('<td>').text(order.type));
-        row.append($('<td>').text(order.status));
-        row.append($('<td>').text(order.pnl));
-        row.append($('<td>').append($('<button>').text('Exit').addClass('btn btn-success')));
-        $('#open-orders-body').append(row);
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var raw = JSON.stringify({
+          "userWID": user,
+        });
+
+        var requestOptions = {
+          method: 'POST',
+          headers: myHeaders,
+          body: raw,
+          redirect: 'follow'
+        };
+
+        fetch("http://localhost:5000/getTrades", requestOptions)
+          .then(response => response.json())
+          .then(result => {
+            console.log(result)
+
+            var tradesArray = result.Trades;
+            getTradeStat(tradesArray, user)
+              .then(updatedTradesArray => {
+                console.log(updatedTradesArray);
+
+                var table = document.getElementById("activeTradesTable");
+                for (var i = 0; i < updatedTradesArray.length; i++) {
+                  var trade = updatedTradesArray[i].trade;
+                  var row = document.createElement("tr");
+                  for (var key in trade) {
+                    var td = document.createElement("td");
+                    td.textContent = trade[key];
+                    row.appendChild(td);
+                  }
+                  // Add button column
+                  var buttonTd = document.createElement("td");
+                  var button = document.createElement("button");
+                  button.textContent = "Transfer";
+                  button.addEventListener("click", function() {
+                    // Handle button click
+                    console.log("Button clicked for trade: ", trade);
+                  });
+                  buttonTd.appendChild(button);
+                  row.appendChild(buttonTd);
+
+
+                  table.appendChild(row);
+                }
+              })
+              .catch(error => console.log('error', error));
+          })
+          .catch(error => console.log('error', error));
+      }
+
+    function getTradeStat(tradesArray, user) {
+      return new Promise((resolve, reject) => {
+        console.log("getTradeStat")
+        var data = [];
+        var myHeaders = new Headers();
+        myHeaders.append("Authorization", "Basic dTFzeDlhMmpkMTppZkdwNFFKS2gtU3RLTlZTR0RZc2xQMHBmZEdMelFJMHhiSXAzNHRzNGQ4");
+
+        var promises = tradesArray.map(tradeItem => {
+          var trade = tradeItem.trade;
+          console.log(trade)
+          var tradeID = parseInt(trade.tradeID) - 1;
+          var url = "https://u1afypqnup-u1qc0kallb-connect.us1-azure.kaleido.io/instances/" + trade.symbol + "/trades?input=" + tradeID + "&kld-from=" + user;
+          var requestOptions = {
+            method: 'GET',
+            redirect: 'follow',
+            headers: myHeaders,
+          };
+
+          return fetch(url, requestOptions)
+            .then(response => response.json())
+            .then(result => {
+              console.log(result);
+              
+
+              //check if trade active 
+              var tradeActive = result.tradeActive;
+
+
+
+              var tradeType = parseInt(trade.tradeType);
+              var currentVariableValue = parseInt(result.currentVariableValue);
+              var currentFixedValue = parseInt(result.currentFixedValue);
+              var pnl = 0;
+              if (tradeActive == "false") {
+                pnl = "closed";
+              } 
+              else if (tradeType == 0) {
+                pnl = currentVariableValue - currentFixedValue;
+              } else {
+                pnl = currentFixedValue - currentVariableValue;
+              }
+              tradeItem.trade.pnl = pnl;
+              return tradeItem;
+            });
+        });
+
+        Promise.all(promises)
+          .then(updatedTradesArray => {
+            console.log(updatedTradesArray);
+            resolve(updatedTradesArray);
+          })
+          .catch(error => {
+            console.log('error', error);
+            reject(error);
+          });
       });
+    }
 
-      // Load trade history
-      var tradeHistory = [
-        {id: 1, symbol: 'XYZ100July15',  price: 100, type: 'Fixed Payment', status: 'expired'},
-        {id: 2, symbol: 'ERE200May30',  price: 200, type: 'Variable Payment', status: 'exited'},
-        // ...
-      ];
 
-      // Display trade history
-      $.each(tradeHistory, function(index, trade) {
-        var row = $('<tr>');
-        row.append($('<td>').text(trade.id));
-        row.append($('<td>').text(trade.symbol));
-        row.append($('<td>').text(trade.price));
-        row.append($('<td>').text(trade.type));
-        row.append($('<td>').text(trade.status));
-        $('#trade-history-body').append(row);
-      });
+
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////
+      // async function loadActiveTrades(){
+       
+      //   var user = sessionStorage.getItem("user");
+      //   var kldfrom = "kld-from=" + user;
+      //   var kldsync = 'kld-sync=true'
+      //   var myHeaders = new Headers();
+
+        
+      //   // get the list of open orders 
+
+      //   var myHeaders = new Headers();
+      //   myHeaders.append("Content-Type", "application/json");
+
+      //   var raw = JSON.stringify({
+      //     "userWID": user,
+      //   });
+
+      //   var requestOptions = {
+      //     method: 'POST',
+      //     headers: myHeaders,
+      //     body: raw,
+      //     redirect: 'follow'
+      //   };
+
+      //   const response = await fetch("http://localhost:5000/getTrades", requestOptions)
+      //     .then(response => response.json())
+      //     .then(result => 
+      //     {
+      //       console.log(result)
+            
+      //       var tradesArray = result.Trades;
+      //       // Create the table rows
+
+
+      //       const updatedTradesArray =  getTradeStat(tradesArray,user);
+      //       console.log(updatedTradesArray);
+
+      //       var table = document.getElementById("activeTradesTable");
+      //       for (var i = 0; i < updatedTradesArray.length; i++) {
+      //         /////////////////////////////////////
+      //         var trade = updatedTradesArray[i].trade;
+      //         var row = document.createElement("tr");
+      //         for (var key in trade) {
+      //           var td = document.createElement("td");
+      //           td.textContent = trade[key];
+      //           row.appendChild(td);
+      //         }
+      //         table.appendChild(row);
+      //         ///////////////////////////////////////
+
+      //       }
+      //     })
+      //     .catch(error => console.log('error', error));
+
+      // }
+
+      // async function getTradeStat(tradesArray,user){
+      //   console.log("getTradeStat")
+      //   var data = [];
+      //   var myHeaders = new Headers();
+      //   myHeaders.append("Authorization", "Basic dTFzeDlhMmpkMTppZkdwNFFKS2gtU3RLTlZTR0RZc2xQMHBmZEdMelFJMHhiSXAzNHRzNGQ4");
+
+      //   for (var i = 0; i < tradesArray.length; i++) {
+      //     var trade = tradesArray[i].trade;
+      //     console.log(trade)
+      //     var tradeID = parseInt(trade.tradeID)-1;
+      //     var url = "https://u1afypqnup-u1qc0kallb-connect.us1-azure.kaleido.io/instances/"+trade.symbol+"/trades?input="+tradeID+"&kld-from="+user;
+      //     var requestOptions = {
+      //       method: 'GET',
+      //       redirect: 'follow',
+      //       headers: myHeaders,
+      //     };
+      //     const response = await fetch(url, requestOptions)
+      //     .then(response => response.json())
+      //     .then( result =>{
+      //       console.log(result);
+
+      //       var tradeType = parseInt(trade.tradeType);
+      //       var currentVariableValue = parseInt(result.currentVariableValue);
+      //       var currentFixedValue = parseInt(result.currentFixedValue);
+      //       var pnl = 0;
+      //       if(tradeType == 0){
+      //         pnl = currentVariableValue - currentFixedValue;
+      //       } 
+      //       else{
+      //         pnl = currentFixedValue - currentVariableValue;
+      //       }
+      //       tradesArray[i].trade.pnl = pnl;
+      //     })
+      //   }
+      //   console.log(tradesArray);
+      //   return tradesArray;
+      // }
+      ////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// function loadActiveTrades(callback) {
+//   console.log("loadOpenOrders");
+//   var user = sessionStorage.getItem("user");
+//   var kldfrom = "kld-from=" + user;
+//   var kldsync = 'kld-sync=true';
+//   var myHeaders = new Headers();
+
+//   // get the list of open orders
+//   var myHeaders = new Headers();
+//   myHeaders.append("Content-Type", "application/json");
+
+//   var raw = JSON.stringify({
+//     "userWID": user,
+//   });
+
+//   var requestOptions = {
+//     method: 'POST',
+//     headers: myHeaders,
+//     body: raw,
+//     redirect: 'follow'
+//   };
+
+//   fetch("http://localhost:5000/getTrades", requestOptions)
+//     .then(response => response.json())
+//     .then(result => {
+//       console.log(result);
+
+//       var tradesArray = result.Trades;
+
+//       getTradeStat(tradesArray, user, (updatedTradesArray) => {
+//         console.log(updatedTradesArray);
+
+//         var table = document.getElementById("activeTradesTable");
+//         for (var i = 0; i < updatedTradesArray.length; i++) {
+//           var trade = updatedTradesArray[i].trade;
+//           var row = document.createElement("tr");
+//           for (var key in trade) {
+//             var td = document.createElement("td");
+//             td.textContent = trade[key];
+//             row.appendChild(td);
+//           }
+//           table.appendChild(row);
+//         }
+
+//         callback(null); // Callback to indicate completion
+//       });
+//     })
+//     .catch(error => {
+//       console.log('error', error);
+//       callback(error); // Callback with error, if any
+//     });
+// }
+
+// function getTradeStat(tradesArray, user, callback) {
+//   console.log("getTradeStat")
+//   var data = [];
+//   var myHeaders = new Headers();
+//   myHeaders.append("Authorization", "Basic dTFzeDlhMmpkMTppZkdwNFFKS2gtU3RLTlZTR0RZc2xQMHBmZEdMelFJMHhiSXAzNHRzNGQ4");
+
+//   var completedRequests = 0;
+
+//   for (var i = 0; i < tradesArray.length; i++) {
+//     var trade = tradesArray[i].trade;
+//     console.log(trade)
+//     var tradeID = parseInt(trade.tradeID) - 1;
+//     var url = "https://u1afypqnup-u1qc0kallb-connect.us1-azure.kaleido.io/instances/" + trade.symbol + "/trades?input=" + tradeID + "&kld-from=" + user;
+//     var requestOptions = {
+//       method: 'GET',
+//       redirect: 'follow',
+//       headers: myHeaders,
+//     };
+//     fetch(url, requestOptions)
+//       .then(response => response.json())
+//       .then(result => {
+//         console.log(result);
+
+//         var tradeType = parseInt(trade.tradeType);
+//         var currentVariableValue = parseInt(result.currentVariableValue);
+//         var currentFixedValue = parseInt(result.currentFixedValue);
+//         var pnl = 0;
+//         if (tradeType == 0) {
+//           pnl = currentVariableValue - currentFixedValue;
+//         } else {
+//           pnl = currentFixedValue - currentVariableValue;
+//         }
+//         tradesArray[i].trade.pnl = pnl;
+
+//         completedRequests++;
+
+//         if (completedRequests === tradesArray.length) {
+//           callback(tradesArray);
+//         }
+//       })
+//       .catch(error => {
+//         console.log('error', error);
+//         callback(tradesArray); // Callback with the original tradesArray if an error occurs
+//       });
+//   }
+// }
+
+// // Usage
+// loadActiveTrades((error) => {
+//   if (error) {
+//     console.log("Error loading active trades:", error);
+//   } else {
+//     console.log("Active trades loaded successfully.");
+//   }
+// });
+
 
     </script>
 
